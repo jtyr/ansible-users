@@ -1,0 +1,220 @@
+---
+
+- name: Create group
+  group:
+    name: "{{ item.group }}"
+    gid: "{{ item.group_id | default(omit) }}"
+    state: "{{ item.group_state | default(omit) }}"
+  when: >
+    'group' in item
+  with_items: "{{ users | get_remote(false) }}"
+  tags:
+    - users_group
+    - users_user_local
+
+- name: Make sure the parent home directory exists
+  file:
+    path: "{{ item.home | dirname }}"
+    state: directory
+  when: >
+    'name' in item and
+    'home' in item and
+    item.home | dirname != '/'
+  with_items: "{{ users | get_remote(false) }}"
+  tags:
+    - users_user
+    - users_user_local
+
+- name: Create user
+  user:
+    name: "{{ item.name }}"
+    append: "{{ item.append | default(omit) }}"
+    comment: "{{ item.comment | default(omit) }}"
+    create_home: "{{ item.create_home | default(omit if ('host' not in item) else true if (inventory_hostname == item.host) else false ) }}"
+    expires: "{{ item.expires | default(omit) }}"
+    force: "{{ item.force | default(omit) }}"
+    generate_ssh_key: "{{ item.generate_ssh_key | default(omit) }}"
+    group: "{{ item.group | default(omit) }}"
+    groups: "{{ item.groups | default(omit) }}"
+    home: "{{ item.home | default(omit) }}"
+    local: "{{ item.local | default(omit) }}"
+    move_home: "{{ item.move_home | default(omit) }}"
+    non_unique: "{{ item.non_unique | default(omit) }}"
+    password: "{{ item.password | default(omit) }}"
+    remove: "{{ item.remove | default(users_remove) }}"
+    seuser: "{{ item.seuser | default(omit) }}"
+    shell: "{{ item.shell | default(omit) }}"
+    skeleton: "{{ item.skeleton | default(omit) }}"
+    ssh_key_bits: "{{ item.ssh_key_bits | default(omit) }}"
+    ssh_key_comment: "{{ item.ssh_key_comment | default(omit) }}"
+    ssh_key_file: "{{ item.ssh_key_file | default(omit) }}"
+    ssh_key_passphrase: "{{ item.ssh_key_passphrase | default(omit) }}"
+    ssh_key_type: "{{ item.ssh_key_type | default(omit) }}"
+    state: "{{ item.state | default(omit) }}"
+    system: "{{ item.system | default(omit) }}"
+    uid: "{{ item.id | default(omit) }}"
+    update_password: "{{ item.update_password | default(omit) }}"
+  when: >
+    'name' in item
+  with_items: "{{ users | get_remote(false) }}"
+  tags:
+    - users_user
+    - users_user_local
+
+- name: Check if the remote user exists
+  shell: id {{ item.name }}
+  register: users_user_exists
+  failed_when: false
+  changed_when: false
+  when: >
+    'name' in item and (
+      'state' not in item or
+      item.state == 'present'
+    ) and (
+      'host' not in item or
+      item.host == inventory_hostname
+    )
+  with_items: "{{ users | get_remote }}"
+  tags:
+    - users_user
+    - users_user_remote
+
+- name: Make sure the home directory for remote user exists
+  shell: env su - {{ item.1.user }} -c id
+  failed_when: false
+  changed_when: false
+  when: >
+    'name' in item and (
+      'state' not in item or
+      item.state == 'present'
+    ) and (
+      'host' not in item or
+      item.host == inventory_hostname
+    ) and
+    users_user_exists is defined and
+    users_user_exists.results | length > 0 and
+    users_user_exists.results[item.0].rc == 0
+  with_indexed_items: "{{ users | get_remote }}"
+  tags:
+    - users_user
+    - users_user_remote
+
+- name: Gather user info
+  user:
+    name: "{{ item.name }}"
+    create_home: no
+  when: >
+    'name' in item and (
+      'state' not in item or
+      item.state == 'present'
+    )
+  with_items: "{{ users }}"
+  register: users_user_info_raw
+  tags:
+    - users_user
+    - users_ssh
+    - users_dir
+
+- name: Set fact with user info
+  set_fact:
+    users_user_info: "{{ users_user_info_raw | get_info }}"
+  when: >
+    users_user_info_raw is defined
+  tags:
+    - users_user
+    - users_ssh
+    - users_dir
+
+- name: Set home directory permissions
+  file:
+    path: "{{ users_user_info[item.name].home }}"
+    mode: "{{ item.home_mode | default(omit) }}"
+    owner: "{{ item.home_owner | default(item.name) }}"
+    group: "{{ item.home_group | default(users_user_info[item.name].group | default(omit)) }}"
+  when: >
+    'name' in item and (
+      'state' not in item or
+      item.state == 'present'
+    ) and (
+      'host' not in item or
+      item.host == inventory_hostname
+    ) and
+    item | intersect(['home_mode', 'home_owner', 'home_group']) | length > 0
+  with_items: "{{ users }}"
+  tags:
+    - users_user
+
+- name: Add SSH authorized keys for the user
+  include_tasks: keys.yaml
+  when: >
+    'name' in user and (
+      'state' not in user or
+      user.state == 'present'
+    ) and (
+      'host' not in user or
+      user.host == inventory_hostname
+    ) and
+    'ssh_keys' in user
+  with_items: "{{ users }}"
+  loop_control:
+    loop_var: user
+  tags:
+    - users_ssh
+
+- name: Set .ssh directory permissions
+  file:
+    path: "{{ users_user_info[item.name].home ~ '/.ssh'}}"
+    mode: "{{ item.ssh_dir_mode | default(omit) }}"
+    owner: "{{ item.ssh_dir_owner | default(item.name) }}"
+    group: "{{ item.ssh_dir_group | default(users_user_info[item.name].group | default(omit)) }}"
+    state: directory
+  when: >
+    'name' in item and (
+      'state' not in item or
+      item.state == 'present'
+    ) and (
+      'host' not in item or
+      item.host == inventory_hostname
+    ) and
+    'ssh_keys' in item and
+    item | intersect(['ssh_dir_mode', 'ssh_dir_owner', 'ssh_dir_group']) | length > 0
+  with_items: "{{ users }}"
+  tags:
+    - users_ssh
+
+- name: Set .ssh/authorized_keys file permissions
+  file:
+    path: "{{ users_user_info[item.name].home ~ '/.ssh/authorized_keys'}}"
+    mode: "{{ item.ssh_auth_mode | default(omit) }}"
+    owner: "{{ item.ssh_auth_owner | default(item.name) }}"
+    group: "{{ item.ssh_auth_group | default(users_user_info[item.name].group | default(omit)) }}"
+  when: >
+    'name' in item and (
+      'state' not in item or
+      item.state == 'present'
+    ) and (
+      'host' not in item or
+      item.host == inventory_hostname
+    ) and
+    'ssh_keys' in item and
+    item | intersect(['ssh_auth_mode', 'ssh_auth_owner', 'ssh_auth_group']) | length > 0
+  with_items: "{{ users }}"
+  tags:
+    - users_ssh
+
+- name: Create additional directory
+  include_tasks: add_dir.yaml
+  when: >
+    'name' in user and (
+      'state' not in user or
+      user.state == 'present'
+    ) and (
+      'host' not in user or
+      user.host == inventory_hostname
+    ) and
+    'add_dirs' in user
+  with_items: "{{ users }}"
+  loop_control:
+    loop_var: user
+  tags:
+    - users_dir
