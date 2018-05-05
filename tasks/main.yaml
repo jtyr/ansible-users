@@ -52,7 +52,7 @@
     ssh_key_type: "{{ item.ssh_key_type | default(omit) }}"
     state: "{{ item.state | default(omit) }}"
     system: "{{ item.system | default(omit) }}"
-    uid: "{{ item.id | default(omit) }}"
+    uid: "{{ item.uid | default(omit) }}"
     update_password: "{{ item.update_password | default(omit) }}"
   when: >
     'name' in item

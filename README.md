@@ -57,9 +57,9 @@ Examples
   vars:
     users:
       - name: myuser
-        uid: 12000
+        uid: 2000
         group: myusers
-        guid: 12000
+        gid: 2000
         comment: My user
         password: "$6$DaWdfn9ZmxeMMMe/$3snNH112PneNfs81JGCD4p5f10b7gnNgF8wk.2HPp0ZzWrxrPnH66YE4PDN.WP11X618U47eEX2Mr2cSv4ec61"
         ssh_keys:
@@ -124,7 +124,7 @@ Examples
         password: "{{ users_root_password }}"
       # Create ansible user and group
       - name: ansible
-        id: 1000
+        uid: 1000
         group: ansible
         gid: 1000
         comment: Configuration management user
