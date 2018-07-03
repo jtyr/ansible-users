@@ -1,0 +1,24 @@
+---
+
+- name: Add SSH private key for the user
+  copy:
+    dest: "{{ users_user_info[user.name].home ~ '/.ssh/' ~ (item.file | default('id_rsa')) }}"
+    content: "{{ item.key }}"
+    mode: "{{ item.mode | default('0600') }}"
+    owner: "{{ item.owner | default(user.name) }}"
+    group: "{{ item.group | default(users_user_info[user.name].group | default(omit)) }}"
+  when: >
+    'status' not in item or
+    item.status == 'present'
+  with_items: "{{ user.ssh_priv_keys | default([]) }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
+
+- name: Remove SSH private key for the user
+  file:
+    path: "{{ users_user_info[user.name].home ~ '/.ssh/' ~ (item.file | default('id_rsa')) }}"
+    status: absent
+  when: >
+    'status' in item and
+    item.status == 'absent'
+  with_items: "{{ user.ssh_priv_keys | default([]) }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"

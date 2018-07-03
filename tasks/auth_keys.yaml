@@ -1,0 +1,17 @@
+---
+
+- name: Add SSH authorized key for the user
+  authorized_key:
+    user: "{{ user.name }}"
+    key: "{{ item }}"
+    exclusive: "{{ user.ssh_auth_keys_exclusive | default(omit) }}"
+  with_items: "{{
+    [ user.ssh_auth_keys | join('\n') ]
+      if (
+        users_ssh_auth_keys_exclusive or (
+          'ssh_auth_keys_exclusive' in user and
+          user.ssh_auth_keys_exclusive
+        )
+      ) else
+    user.ssh_auth_keys }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"

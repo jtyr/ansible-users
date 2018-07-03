@@ -52,7 +52,7 @@ Examples
   roles:
     - users
 
-- name: Example of how to create a user with a specific UID, group and GID, comment, password and SSH public key
+- name: Example of how to create a user with a specific UID, group and GID, comment, password and SSH authorized and private key
   hosts: all
   vars:
     users:
@@ -62,8 +62,14 @@ Examples
         gid: 2000
         comment: My user
         password: "$6$DaWdfn9ZmxeMMMe/$3snNH112PneNfs81JGCD4p5f10b7gnNgF8wk.2HPp0ZzWrxrPnH66YE4PDN.WP11X618U47eEX2Mr2cSv4ec61"
-        ssh_keys:
+        ssh_auth_keys:
           - ssh-rsa AAAAB3NzaC1yc2EAAAEDAQABAAABAQCWp73FFB8Ck/S6i3lTijbfQGxnHC84iu7anCfSeyJE89JuI9C2OU+QlW6tsl/SbXY2LR0TGUhD5aX2ZvC3CZrrl4Yq4/9upEVgUpzJdDJo6ZcLOWVDuetHArNbIC2pcdU/skDoCP0wcuBJ09qLZ4qi5q/r6RS79PmzhvNg6CjzmT5wztMZIjlS4Z7+RqeR1WZMur8FXRfy25jqewdUUWIDVxOvRJLvwB1tW9NA9oe7jp4E9FAn4ZgsMs/143N8bw16M5g7c6nOMvQUBRld10ZnO10QTMpE3WWKiHgyCeQCdZ8W4EsrIUelbOoLkFuMADoZ9gO9biJ/2aKIqr9n+++d ansible@host
+        ssh_priv_keys:
+          - key: |
+              -----BEGIN RSA PRIVATE KEY-----
+              ...
+              -----END RSA PRIVATE KEY-----
+            # Optionally you can also specify the file, owner, group and mode of each priv key
   roles:
     - users
 
@@ -77,7 +83,7 @@ Examples
         # The user doesn't need shell
         shell: /bin/false
         # Explicite list of allowed public SSH keys
-        ssh_keys:
+        ssh_auth_keys:
           - ssh-rsa AAAAB3NzaC1yc2EAAAEDAQABAAABAQCWp73FFB8Ck/S6i3lTijbfQGxnHC84iu7anCfSeyJE89JuI9C2OU+QlW6tsl/SbXY2LR0TGUhD5aX2ZvC3CZrrl4Yq4/9upEVgUpzJdDJo6ZcLOWVDuetHArNbIC2pcdU/skDoCP0wcuBJ09qLZ4qi5q/r6RS79PmzhvNg6CjzmT5wztMZIjlS4Z7+RqeR1WZMur8FXRfy25jqewdUUWIDVxOvRJLvwB1tW9NA9oe7jp4E9FAn4ZgsMs/143N8bw16M5g7c6nOMvQUBRld10ZnO10QTMpE3WWKiHgyCeQCdZ8W4EsrIUelbOoLkFuMADoZ9gO9biJ/2aKIqr9n+++d ansible@host
         # The home directory is writable only by root
         # (user cannot create any files or directories there)
@@ -130,7 +136,7 @@ Examples
         comment: Configuration management user
         password: "{{ users_ansible_password }}"
         # Add single SSH public key
-        ssh_keys:
+        ssh_auth_keys:
           - ssh-rsa AAAAB3NzaC1yc2EAAAEDAQABAAABAQCWp73FFB8Ck/S6i3lTijbfQGxnHC84iu7anCfSeyJE89JuI9C2OU+QlW6tsl/SbXY2LR0TGUhD5aX2ZvC3CZrrl4Yq4/9upEVgUpzJdDJo6ZcLOWVDuetHArNbIC2pcdU/skDoCP0wcuBJ09qLZ4qi5q/r6RS79PmzhvNg6CjzmT5wztMZIjlS4Z7+RqeR1WZMur8FXRfy25jqewdUUWIDVxOvRJLvwB1tW9NA9oe7jp4E9FAn4ZgsMs/143N8bw16M5g7c6nOMvQUBRld10ZnO10QTMpE3WWKiHgyCeQCdZ8W4EsrIUelbOoLkFuMADoZ9gO9biJ/2aKIqr9n+++d ansible@host
 
     # Custom list of users
@@ -139,7 +145,7 @@ Examples
       - remote: yes
         name: service1
         # Add multiple SSH public keys
-        ssh_keys:
+        ssh_auth_keys:
           - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAEABAQCWp73FFB8Ck/S6i6lTjibfQGxnHC84iu7anCfSeyJE89JuI9C2OU+QlWatsl/SbXY2LR0TGUhD5aX2ZvC3CZrrl4Yq4/fy25jqewdUUWIDVxOvRJLvwB1tW9NA9oe7jp9upEVgUpzJdDJo6ZcLOWVDuetHArNbIC2pcdU/skcoCP0wcuBJ09qLZ4qi5q/r6RS79PmzhvNg6CjzmT5wztMZIjlS4Z7+RqeR8WZMur8FXR4E9FAn4ZgsMs/143N8bw16M5g7c6nOMvQUBRld10ZnO10QtMpE3WWKiHgyCeQCdZ8W4EsrIUelbOoLkFuMADoZ9gO9biJ/2aKIqr9n+++d ansible@host1
           - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABACABAQCWp73FFB8Ck//skcoEP0wcuBJ09qLZ4qi5q/r6RS79PmzhvNg6CjzmT5wzt3ZIjlS4Z7+RqeR8WZMur8FXRfy25jqewdUUWIDVxOvRJLvwB1tW9NA9oe7jp4E9FAn4ZgsMs/143N8bw16M5g7c6nOMvQUBRld10ZnO10QTMpE3WWKiHgyCeQCdZ8W4EsrIUelbOoLkFuMADoZ9gO9biJS6i6lTijbfQGxnHC84iu7anCfSeyJE89JuI9C2OU+QlW6tsl/SbXY2LR0TGUhD5aX2ZvC3CZrll4Yq4/9upEVgUpzJdDJo6ZcLOWVDuetHArNbIC2pcdU/2aKIqr9n+++d ansible@host2
       # Remove previously created user
@@ -166,7 +172,10 @@ Role variables
 users_remove: yes
 
 # Add SSH keys exclusively (remove all unknown keys)
-users_ssh_keys_exclusive: yes
+users_ssh_auth_keys_exclusive: yes
+
+# Force to show log even if it contains sensitive information (e.g. SSH priv key)
+users_force_show_log: no
 
 # List of users/groups to be created (see README for examples)
 users: []

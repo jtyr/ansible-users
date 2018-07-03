@@ -8,3 +8,4 @@
     group: "{{ item.group | default(users_user_info[user.name].group | default(omit)) }}"
     state: directory
   with_items: "{{ user.add_dirs }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
