@@ -7,7 +7,7 @@
     state: "{{ item.group_state | default(omit) }}"
   when: >
     'group' in item
-  no_log: "{{ false if 'ssh_priv_keys' not in item or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_items: "{{ users | get_remote(false) }}"
   tags:
     - users_group
@@ -21,7 +21,7 @@
     'name' in item and
     'home' in item and
     item.home | dirname != '/'
-  no_log: "{{ false if 'ssh_priv_keys' not in item or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_items: "{{ users | get_remote(false) }}"
   tags:
     - users_user
@@ -58,7 +58,7 @@
     update_password: "{{ item.update_password | default(omit) }}"
   when: >
     'name' in item
-  no_log: "{{ false if 'ssh_priv_keys' not in item or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_items: "{{ users | get_remote(false) }}"
   tags:
     - users_user
@@ -77,7 +77,7 @@
       'host' not in item or
       item.host == inventory_hostname
     )
-  no_log: "{{ false if 'ssh_priv_keys' not in item or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_items: "{{ users | get_remote }}"
   tags:
     - users_user
@@ -98,7 +98,7 @@
     users_user_exists is defined and
     users_user_exists.results | length > 0 and
     users_user_exists.results[item.0].rc == 0
-  no_log: "{{ false if 'ssh_priv_keys' not in item or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_indexed_items: "{{ users | get_remote }}"
   tags:
     - users_user
@@ -113,7 +113,7 @@
       'state' not in item or
       item.state == 'present'
     )
-  no_log: "{{ false if 'ssh_priv_keys' not in item or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_items: "{{ users }}"
   register: users_user_info_raw
   tags:
@@ -146,7 +146,7 @@
       item.host == inventory_hostname
     ) and
     item | intersect(['home_mode', 'home_owner', 'home_group']) | length > 0
-  no_log: "{{ false if 'ssh_priv_keys' not in item or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_items: "{{ users }}"
   tags:
     - users_user
@@ -187,7 +187,7 @@
       'ssh_auth_keys' in item or
       'ssh_priv_keys' in item
     )
-  no_log: "{{ false if 'ssh_priv_keys' not in item or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_items: "{{ users }}"
   tags:
     - users_ssh
@@ -208,7 +208,7 @@
     ) and
     'ssh_auth_keys' in item and
     item | intersect(['ssh_auth_mode', 'ssh_auth_owner', 'ssh_auth_group']) | length > 0
-  no_log: "{{ false if 'ssh_priv_keys' not in item or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_items: "{{ users }}"
   tags:
     - users_ssh
@@ -224,7 +224,7 @@
       user.host == inventory_hostname
     ) and
     'ssh_priv_keys' in user
-  no_log: "{{ false if 'ssh_priv_keys' not in user or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_items: "{{ users }}"
   loop_control:
     loop_var: user
@@ -242,7 +242,7 @@
       user.host == inventory_hostname
     ) and
     'add_dirs' in user
-  no_log: "{{ false if 'ssh_priv_keys' not in user or users_force_show_log == true else true }}"
+  no_log: "{{ false if users_force_show_log == true else true }}"
   with_items: "{{ users }}"
   loop_control:
     loop_var: user
