@@ -1,6 +1,6 @@
 ---
 
-- name: Create additional directory
+- name: Create additional directory for the user {{ item.name }}
   file:
     path: "{{ users_user_info[user.name].home ~ '/' ~ item.name }}"
     mode: "{{ item.mode | default(omit) }}"

@@ -1,6 +1,6 @@
 ---
 
-- name: Add SSH private key for the user
+- name: Add SSH private key for the user {{ user.name }}
   copy:
     dest: "{{ users_user_info[user.name].home ~ '/.ssh/' ~ (item.file | default('id_rsa')) }}"
     content: "{{ item.key }}"
@@ -13,7 +13,7 @@
   with_items: "{{ user.ssh_priv_keys | default([]) }}"
   no_log: "{{ false if users_force_show_log == true else true }}"
 
-- name: Remove SSH private key for the user
+- name: Remove SSH private key for the user {{ user.name }}
   file:
     path: "{{ users_user_info[user.name].home ~ '/.ssh/' ~ (item.file | default('id_rsa')) }}"
     status: absent
