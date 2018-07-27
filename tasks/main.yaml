@@ -8,7 +8,7 @@
   when: >
     'group' in item
   with_items: "{{ users | get_remote(false) }}"
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_group
     - users_user_local
@@ -25,7 +25,8 @@
       inventory_hostname == item.host
     )
   with_items: "{{ users | get_remote(false) }}"
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  register: users_home_create_results
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_user
     - users_user_local
@@ -62,7 +63,7 @@
   when: >
     'name' in item
   with_items: "{{ users | get_remote(false) }}"
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_user
     - users_user_local
@@ -81,7 +82,7 @@
       item.host == inventory_hostname
     )
   with_items: "{{ users | get_remote }}"
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_user
     - users_user_remote
@@ -102,7 +103,7 @@
     users_user_exists.results | length > 0 and
     users_user_exists.results[item.0].rc == 0
   with_indexed_items: "{{ users | get_remote }}"
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_user
     - users_user_remote
@@ -118,7 +119,7 @@
     )
   with_items: "{{ users }}"
   register: users_user_info_raw
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_user
     - users_ssh
@@ -133,6 +134,22 @@
     - users_user
     - users_ssh
     - users_dir
+
+- name: Set initial home directory permissions
+  file:
+    path: "{{ item.item.home }}"
+    mode: "0700"
+    owner: "{{ item.item.name }}"
+    group: "{{ item.item.group | default(omit) }}"
+  when: >
+    item.changed and
+    'item' in item and
+    'home' in item.item
+  with_items: "{{ users_home_create_results.results }}"
+  no_log: "{{ not users_force_show_log == true }}"
+  tags:
+    - users_user
+    - users_user_local
 
 - name: Set home directory permissions
   file:
@@ -150,7 +167,7 @@
     ) and
     item | intersect(['home_mode', 'home_owner', 'home_group']) | length > 0
   with_items: "{{ users }}"
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_user
 
@@ -191,7 +208,7 @@
       'ssh_priv_keys' in item
     )
   with_items: "{{ users }}"
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_ssh
 
@@ -212,7 +229,7 @@
     'ssh_auth_keys' in item and
     item | intersect(['ssh_auth_mode', 'ssh_auth_owner', 'ssh_auth_group']) | length > 0
   with_items: "{{ users }}"
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_ssh
 
@@ -230,7 +247,7 @@
   with_items: "{{ users }}"
   loop_control:
     loop_var: user
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_ssh
 
@@ -248,6 +265,6 @@
   with_items: "{{ users }}"
   loop_control:
     loop_var: user
-  no_log: "{{ false if users_force_show_log == true else true }}"
+  no_log: "{{ not users_force_show_log }}"
   tags:
     - users_dir
