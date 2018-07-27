@@ -13,7 +13,7 @@
     - users_group
     - users_user_local
 
-- name: Make sure the parent home directory exists
+- name: Make sure the home directory for the local user exists
   file:
     path: "{{ item.home }}"
     state: directory
